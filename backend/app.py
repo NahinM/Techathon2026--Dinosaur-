@@ -136,16 +136,6 @@ def get_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-# @app.route("/api/device", methods=["POST"])
-# def post_data():
-#     pass
-
-# @app.route("/api/update", methods=["GET"])
-# def update_data():
-#     pass
-
-# discord bot
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
