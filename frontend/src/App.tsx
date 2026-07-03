@@ -77,7 +77,7 @@ function App() {
       setConnectionStatus('offline')
     })
 
-    socket.on('state_update', (payload: { devices?: BackendDevice[]; stats?: { total: number; 'Dining Room': number; 'Work Room 1': number; 'Work Room 2': number } }) => {
+    socket.on('state_update', (payload: { devices?: BackendDevice[]; stats?: { total: number; 'Drawing Room': number; 'Work Room 1': number; 'Work Room 2': number } }) => {
       if (payload.devices) {
         setDevices((currentDevices) => mapBackendDevices(payload.devices ?? [], currentDevices))
       }

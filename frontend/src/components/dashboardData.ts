@@ -11,12 +11,16 @@ export type BackendDevice = {
   room_id: number
   device_type: DeviceType
   status: string | boolean
-  power: number
+  power?: number
+  power_draw?: number
+  name?: string
+  last_changed?: string
+  continuous_on_since?: string | null
 }
 
 export type BackendStats = {
   total: number
-  'Dining Room': number
+  'Drawing Room': number
   'Work Room 1': number
   'Work Room 2': number
 }
@@ -66,7 +70,7 @@ const DEVICE_NAME_BY_ID: Record<number, string> = {
 export function createDefaultStats(): StatItem[] {
   return [
     { label: 'Total Power draw', value: 0, unit: 'W' },
-    { label: 'Dining Room', value: 0, unit: 'W' },
+    { label: 'Drawing Room', value: 0, unit: 'W' },
     { label: 'Work Room 1', value: 0, unit: 'W' },
     { label: 'Work Room 2', value: 0, unit: 'W' },
   ]
@@ -88,8 +92,10 @@ export function mapBackendDevices(devices: BackendDevice[], previousDevices: Dev
     const existingDevice = previousById.get(device.id)
     const normalizedStatus = normalizeStatus(device.status)
     const room = ROOM_BY_ID[device.room_id] ?? `Room ${device.room_id}`
-    const name = DEVICE_NAME_BY_ID[device.id] ?? `Device ${device.id}`
-    const powerDraw = Number(device.power ?? 0)
+    const name = device.name ?? DEVICE_NAME_BY_ID[device.id] ?? `Device ${device.id}`
+    const powerDraw = Number(device.power ?? device.power_draw ?? 0)
+    const lastChanged = device.last_changed ?? now
+    const continuousOnSince = device.continuous_on_since ?? (normalizedStatus ? now : null)
 
     return {
       id: device.id,
@@ -101,12 +107,12 @@ export function mapBackendDevices(devices: BackendDevice[], previousDevices: Dev
       lastChanged:
         existingDevice && existingDevice.status === normalizedStatus && existingDevice.powerDraw === powerDraw
           ? existingDevice.lastChanged
-          : now,
+          : lastChanged,
       continuousOnSince:
         existingDevice && existingDevice.status === normalizedStatus
           ? existingDevice.continuousOnSince
           : normalizedStatus
-            ? now
+            ? continuousOnSince
             : null,
     }
   })
@@ -115,7 +121,7 @@ export function mapBackendDevices(devices: BackendDevice[], previousDevices: Dev
 export function mapStatsResponse(stats: BackendStats): StatItem[] {
   return [
     { label: 'Total Power draw', value: Number(stats.total ?? 0), unit: 'W' },
-    { label: 'Dining Room', value: Number(stats['Dining Room'] ?? 0), unit: 'W' },
+    { label: 'Drawing Room', value: Number(stats['Drawing Room'] ?? 0), unit: 'W' },
     { label: 'Work Room 1', value: Number(stats['Work Room 1'] ?? 0), unit: 'W' },
     { label: 'Work Room 2', value: Number(stats['Work Room 2'] ?? 0), unit: 'W' },
   ]
