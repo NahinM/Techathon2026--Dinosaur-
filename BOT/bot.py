@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands, tasks
-import google.generativeai as genai
+from groq import Groq
 import json
 import aiohttp
 from datetime import datetime
@@ -13,12 +13,11 @@ load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 # 🚨 SECURITY FIRST: The tokens are safely loaded from the hidden .env file
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 API_URL = os.getenv("API_URL", "http://127.0.0.1:5000/api/devices")
 
-# 2. Initialize Gemini AI
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 2. Initialize Groq AI
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 # 3. Setup Bot Intets & Prefix
 intents = discord.Intents.default()
@@ -44,9 +43,16 @@ async def fetch_backend_data():
         return None
 
 async def get_ai_reply(prompt):
-    """Helper function to talk to Gemini"""
-    response = model.generate_content(prompt)
-    return response.text
+    """Talks to Groq's free Llama model instead of Gemini."""
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"Groq error: {e}")
+        return "⚠️ AI is temporarily unavailable — please try again in a moment."
 
 # ==========================================
 # BONUS FEATURE: PROACTIVE ALERTS (Runs every 5 mins)
