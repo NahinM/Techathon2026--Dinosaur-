@@ -178,6 +178,19 @@ h1 {
   margin-bottom: 34px;
 }
 
+.connection-note {
+  margin: -16px 0 16px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.connection-note span {
+  color: var(--cyan);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

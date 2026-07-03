@@ -1,8 +1,4 @@
-type StatItem = {
-    label: string
-    value: number
-    unit: string
-}
+import type { StatItem } from './dashboardData'
 
 type StatisticsPanelProps = {
     stats: StatItem[]

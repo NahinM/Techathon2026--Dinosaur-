@@ -5,47 +5,103 @@ import { DashboardFooter } from './components/DashboardFooter'
 import { DashboardHeader } from './components/DashboardHeader'
 import { FloorplanSection } from './components/FloorplanSection'
 import { StatisticsPanel } from './components/StatisticsPanel'
-import { POWER, ROOMS, createInitialDevices, type Device } from './components/dashboardData'
+import {
+  ROOMS,
+  createDefaultStats,
+  createInitialDevices,
+  mapBackendDevices,
+  mapStatsResponse,
+  type BackendDevice,
+  type Device,
+  type StatItem,
+} from './components/dashboardData'
+import { io } from 'socket.io-client'
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://127.0.0.1:5000'
+const API_BASE_URL = BACKEND_URL.replace(/\/$/, '')
 
 function App() {
-  const [devices, setDevices] = useState<Device[]>(() => createInitialDevices())
+  const [devices, setDevices] = useState<Device[]>([])
+  const [stats, setStats] = useState<StatItem[]>(() => createDefaultStats())
   const [todayKwh, setTodayKwh] = useState(4.2)
   const [clock, setClock] = useState(() => new Date())
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'offline'>('connecting')
+  const totalPower = devices.reduce((sum, device) => sum + device.powerDraw, 0)
 
   useEffect(() => {
     const clockInterval = window.setInterval(() => {
       setClock(new Date())
     }, 1000)
 
-    const simulationInterval = window.setInterval(() => {
-      setDevices((currentDevices) => {
-        const nextDevices = currentDevices.map((device) => ({ ...device }))
-        const target = nextDevices[Math.floor(Math.random() * nextDevices.length)]
+    const loadInitialState = async () => {
+      try {
+        const [devicesResponse, statsResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/devices`),
+          fetch(`${API_BASE_URL}/api/stats`),
+        ])
 
-        if (target) {
-          target.status = !target.status
-          target.powerDraw = target.status ? POWER[target.type] : 0
-          target.lastChanged = new Date().toISOString()
-          target.continuousOnSince = target.status ? new Date().toISOString() : null
+        if (!devicesResponse.ok) {
+          throw new Error(`Failed to load devices: ${devicesResponse.status}`)
         }
 
-        setTodayKwh((currentKwh) => {
-          const totalPower = nextDevices.reduce((sum, device) => sum + device.powerDraw, 0)
-          return currentKwh + (totalPower / 1000) * (5 / 3600)
-        })
+        if (!statsResponse.ok) {
+          throw new Error(`Failed to load stats: ${statsResponse.status}`)
+        }
 
-        return nextDevices
-      })
-    }, 5000)
+        const devicesData = (await devicesResponse.json()) as BackendDevice[]
+        const statsData = await statsResponse.json()
+
+        setDevices(mapBackendDevices(devicesData))
+        setStats(mapStatsResponse(statsData))
+      } catch {
+        setDevices(createInitialDevices())
+        setConnectionStatus('offline')
+      }
+    }
+
+    void loadInitialState()
+
+    const socket = io(BACKEND_URL, {
+      transports: ['websocket'],
+    })
+
+    socket.on('connect', () => {
+      setConnectionStatus('connected')
+    })
+
+    socket.on('disconnect', () => {
+      setConnectionStatus('offline')
+    })
+
+    socket.on('connect_error', () => {
+      setConnectionStatus('offline')
+    })
+
+    socket.on('state_update', (payload: { devices?: BackendDevice[]; stats?: { total: number; 'Dining Room': number; 'Work Room 1': number; 'Work Room 2': number } }) => {
+      if (payload.devices) {
+        setDevices((currentDevices) => mapBackendDevices(payload.devices ?? [], currentDevices))
+      }
+
+      if (payload.stats) {
+        setStats(mapStatsResponse(payload.stats))
+      }
+    })
 
     return () => {
       window.clearInterval(clockInterval)
-      window.clearInterval(simulationInterval)
+      socket.disconnect()
     }
   }, [])
 
-  const totalPower = devices.reduce((sum, device) => sum + device.powerDraw, 0)
-  const statistics = buildStatistics(devices)
+  useEffect(() => {
+    const usageInterval = window.setInterval(() => {
+      setTodayKwh((currentKwh) => currentKwh + (totalPower / 1000) * (5 / 3600))
+    }, 5000)
+
+    return () => {
+      window.clearInterval(usageInterval)
+    }
+  }, [totalPower])
 
   const formattedClock = clock.toLocaleString()
   const alerts = buildAlerts(devices, clock)
@@ -58,7 +114,11 @@ function App() {
       <main className="wrap">
         <DashboardHeader totalPower={totalPower} todayKwh={todayKwh} />
 
-        <StatisticsPanel stats={statistics} />
+        <div className="connection-note">
+          WebSocket status: <span>{connectionStatus}</span>
+        </div>
+
+        <StatisticsPanel stats={stats} />
 
         <FloorplanSection devices={devices} rooms={ROOMS} />
 
@@ -99,22 +159,6 @@ function buildAlerts(devices: Device[], clock: Date) {
     })
 
   return alerts
-}
-
-function buildStatistics(devices: Device[]) {
-  const roomTotals = ROOMS.reduce<Record<string, number>>((accumulator, room) => {
-    accumulator[room] = devices
-      .filter((device) => device.room === room)
-      .reduce((sum, device) => sum + device.powerDraw, 0)
-    return accumulator
-  }, {})
-
-  return [
-    { label: 'Total Power draw', value: devices.reduce((sum, device) => sum + device.powerDraw, 0), unit: 'W' },
-    { label: 'Dining Room', value: roomTotals['Drawing Room'] ?? 0, unit: 'W' },
-    { label: 'Work Room 1', value: roomTotals['Work Room 1'] ?? 0, unit: 'W' },
-    { label: 'Work Room 2', value: roomTotals['Work Room 2'] ?? 0, unit: 'W' },
-  ]
 }
 
 export default App
