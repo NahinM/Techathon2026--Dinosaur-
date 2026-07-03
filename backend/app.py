@@ -12,7 +12,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 DEVICES_TABLE = os.environ.get("SUPABASE_DEVICES_TABLE", "devices")
 ROOM_NAMES = {
-    1: "Dining Room",
+    1: "Drawing Room",
     2: "Work Room 1",
     3: "Work Room 2",
 }
@@ -64,21 +64,23 @@ def fetch_devices_from_db():
     if supabase is None:
         raise RuntimeError("Supabase is not configured")
 
-    response = supabase.table(DEVICES_TABLE).select("id,room_id,device_type,status,power").order("id").execute()
+    response = supabase.table(DEVICES_TABLE).select(
+        "id,room_id,device_type,status,power_draw,name,last_changed,continuous_on_since"
+    ).order("id").execute()
     return cast(list[dict[str, Any]], response.data or [])
 
 
 def calculate_stats_from_devices(devices):
     stats = {
         "total": 0,
-        "Dining Room": 0,
+        "Drawing Room": 0,
         "Work Room 1": 0,
         "Work Room 2": 0,
     }
 
     for device in devices:
         room_name = ROOM_NAMES.get(device.get("room_id"), "Unknown Room")
-        power_value = device.get("power") or 0
+        power_value = device.get("power_draw") or device.get("power") or 0
 
         try:
             power_value = int(power_value)
@@ -173,14 +175,16 @@ def post_devices():
             device_type = str(existing_rows[0].get("device_type", ""))
             update_payload = {
                 "status": normalized_status,
-                "power": calculate_power(device_type, normalized_status),
+                "power_draw": calculate_power(device_type, normalized_status),
             }
 
             result = (
                 supabase.table(DEVICES_TABLE)
                 .update(update_payload)
                 .eq("id", device_id)
-                .select("id,room_id,device_type,status,power")
+                .select(
+                    "id,room_id,device_type,status,power_draw,name,last_changed,continuous_on_since"
+                )
                 .execute()
             )
         except Exception as exc:
