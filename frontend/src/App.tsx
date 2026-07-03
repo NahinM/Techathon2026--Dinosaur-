@@ -3,8 +3,8 @@ import './App.css'
 import { AlertsPanel } from './components/AlertsPanel'
 import { DashboardFooter } from './components/DashboardFooter'
 import { DashboardHeader } from './components/DashboardHeader'
-import { DeviceLists } from './components/DeviceLists'
 import { FloorplanSection } from './components/FloorplanSection'
+import { StatisticsPanel } from './components/StatisticsPanel'
 import { POWER, ROOMS, createInitialDevices, type Device } from './components/dashboardData'
 
 function App() {
@@ -45,6 +45,7 @@ function App() {
   }, [])
 
   const totalPower = devices.reduce((sum, device) => sum + device.powerDraw, 0)
+  const statistics = buildStatistics(devices)
 
   const formattedClock = clock.toLocaleString()
   const alerts = buildAlerts(devices, clock)
@@ -56,6 +57,8 @@ function App() {
 
       <main className="wrap">
         <DashboardHeader totalPower={totalPower} todayKwh={todayKwh} />
+
+        <StatisticsPanel stats={statistics} />
 
         <FloorplanSection devices={devices} rooms={ROOMS} />
 
@@ -96,6 +99,22 @@ function buildAlerts(devices: Device[], clock: Date) {
     })
 
   return alerts
+}
+
+function buildStatistics(devices: Device[]) {
+  const roomTotals = ROOMS.reduce<Record<string, number>>((accumulator, room) => {
+    accumulator[room] = devices
+      .filter((device) => device.room === room)
+      .reduce((sum, device) => sum + device.powerDraw, 0)
+    return accumulator
+  }, {})
+
+  return [
+    { label: 'Total Power draw', value: devices.reduce((sum, device) => sum + device.powerDraw, 0), unit: 'W' },
+    { label: 'Dining Room', value: roomTotals['Drawing Room'] ?? 0, unit: 'W' },
+    { label: 'Work Room 1', value: roomTotals['Work Room 1'] ?? 0, unit: 'W' },
+    { label: 'Work Room 2', value: roomTotals['Work Room 2'] ?? 0, unit: 'W' },
+  ]
 }
 
 export default App
