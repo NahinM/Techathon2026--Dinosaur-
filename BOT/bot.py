@@ -5,14 +5,16 @@ import google.generativeai as genai
 import json
 import aiohttp
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 
 # 1. Load the hidden variables from the .env file
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
 
 # 🚨 SECURITY FIRST: The tokens are safely loaded from the hidden .env file
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+API_URL = os.getenv("API_URL", "http://127.0.0.1:5000/api/devices")
 
 # 2. Initialize Gemini AI
 genai.configure(api_key=GEMINI_API_KEY)
@@ -32,7 +34,7 @@ async def fetch_backend_data():
     try:
         async with aiohttp.ClientSession() as session:
             # Connects to Member 3's server
-            async with session.get('http://127.0.0.1:8000/api/status') as response:
+            async with session.get(API_URL) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
