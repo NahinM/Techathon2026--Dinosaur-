@@ -64,7 +64,7 @@ def fetch_devices_from_db():
     if supabase is None:
         raise RuntimeError("Supabase is not configured")
 
-    response = supabase.table(DEVICES_TABLE).select("id,room_id,device_type,status,power").order("id").execute()
+    response = supabase.table(DEVICES_TABLE).select("id,room_id,device_type,status,power_draw").order("id").execute()
     return cast(list[dict[str, Any]], response.data or [])
 
 
