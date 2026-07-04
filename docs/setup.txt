@@ -1,4 +1,0 @@
-python -m venv .venv
-.venv\Scripts\activate.bat #cmd
-.venv\Scripts\Activate.ps1 #powershell
-pip install -r requirements.txt

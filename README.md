@@ -4,7 +4,25 @@ An office monitoring system with live device updates, a web dashboard, and a Dis
 
 ## Overview
 
-This project monitors office devices in real time. Each room contains 5 devices made up of 3 lights and 2 fans. When any device changes state, the dashboard updates live through WebSocket events, and the Discord bot can report the current office status from the backend.
+This project monitors office devices in real time. The office has two rooms, and each room contains five devices: three lights and two fans. When any device changes state, the dashboard updates live through WebSocket events, and the Discord bot can report the current office status from the backend.
+
+## System Design
+
+The high-level system design is shown below.
+
+![System diagram](docs/system-diagram.png)
+
+## Web Dashboard
+
+The dashboard presents the live office state, power usage, and alerts in a single view.
+
+![Web dashboard](docs/web-dashboard.png)
+
+## ESP32 Monitoring Circuit
+
+The office devices are monitored through the ESP32 circuit used in the Drawing Room for lights and fans.
+
+![ESP32 Device Monitoring Circuit - Drawing Room (Lights & Fans)](docs/ESP32.png)
 
 ## Features
 
