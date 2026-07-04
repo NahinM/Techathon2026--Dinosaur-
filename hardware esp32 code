@@ -1,0 +1,63 @@
+// Output Pins (The Devices)
+const int light1_pin = 15; // Example pin for LED 1
+const int light2_pin = 2;  // Example pin for LED 2
+const int light3_pin = 4;  // Example pin for LED 3
+const int fan1_pin = 16;   // Example pin for Motor 1
+const int fan2_pin = 17;   // Example pin for Motor 2
+
+// Input Pins (The Switches)
+const int sw_light1 = 12;
+const int sw_light2 = 14;
+const int sw_light3 = 27;
+const int sw_fan1 = 26;
+const int sw_fan2 = 25;
+
+void setup() {
+  // Start the serial monitor so we can print the status
+  Serial.begin(115200);
+  Serial.println("Starting Drawing Room Simulation...");
+
+  // Tell the ESP32 that the devices are OUTPUTS
+  pinMode(light1_pin, OUTPUT);
+  pinMode(light2_pin, OUTPUT);
+  pinMode(light3_pin, OUTPUT);
+  pinMode(fan1_pin, OUTPUT);
+  pinMode(fan2_pin, OUTPUT);
+
+  // Tell the ESP32 that the switches are INPUTS
+  pinMode(sw_light1, INPUT_PULLUP);
+  pinMode(sw_light2, INPUT_PULLUP);
+  pinMode(sw_light3, INPUT_PULLUP);
+  pinMode(sw_fan1, INPUT_PULLUP);
+  pinMode(sw_fan2, INPUT_PULLUP);
+}
+
+void loop() {
+  // 2. READ THE SWITCHES
+  int l1_state = digitalRead(sw_light1);
+  int l2_state = digitalRead(sw_light2);
+  int l3_state = digitalRead(sw_light3);
+  int f1_state = digitalRead(sw_fan1);
+  int f2_state = digitalRead(sw_fan2);
+
+  // 3. TURN DEVICES ON OR OFF (Assuming LOW means the switch is ON)
+  digitalWrite(light1_pin, l1_state == LOW ? HIGH : LOW);
+  digitalWrite(light2_pin, l2_state == LOW ? HIGH : LOW);
+  digitalWrite(light3_pin, l3_state == LOW ? HIGH : LOW);
+  digitalWrite(fan1_pin, f1_state == LOW ? HIGH : LOW);
+  digitalWrite(fan2_pin, f2_state == LOW ? HIGH : LOW);
+
+  // 4. PRINT STATUS TO SERIAL MONITOR (Looks like JSON for the judges!)
+  Serial.println("--- DRAWING ROOM LIVE STATUS ---");
+  
+  Serial.print("Light 1: "); Serial.println(l1_state == LOW ? "ON (15W)" : "OFF (0W)");
+  Serial.print("Light 2: "); Serial.println(l2_state == LOW ? "ON (15W)" : "OFF (0W)");
+  Serial.print("Light 3: "); Serial.println(l3_state == LOW ? "ON (15W)" : "OFF (0W)");
+  Serial.print("Fan 1:   "); Serial.println(f1_state == LOW ? "ON (60W)" : "OFF (0W)");
+  Serial.print("Fan 2:   "); Serial.println(f2_state == LOW ? "ON (60W)" : "OFF (0W)");
+  
+  Serial.println("================================");
+
+  // Wait 2 seconds before checking the switches again
+  delay(2000); 
+}
