@@ -120,6 +120,31 @@ The backend also supports `SUPABASE_SERVICE_ROLE_KEY` if you prefer to use it.
 
 The dashboard shows a live office view with WebSocket updates, room statistics, alerts, and power usage information.
 
+## Hardware
+Hardware & Circuit Simulation 
+
+This hardware folder contains the hardware schematic and simulation for the IoT office monitoring system, fulfilling the "Sensible Circuit schematic" requirement for the Techathon.
+
+Because this is a simulated environment, we have modeled a representative node: The Drawing Room. This circuit uses an ESP32 microcontroller to monitor physical switches and control the room's devices (3 lights and 2 fans).
+
+hardware Folder Contents
+
+Please check the files in this hardware folder to review the simulation and code:
+
+link_of_simulation.md: Contains the direct URL to the live Wokwi simulation of our hardware. You can interact with the switches here to see the LEDs and Motors respond in real-time.
+
+hardware_esp32_code.cpp: Contains the required C++ (Arduino) code running on the ESP32. This code reads the GPIO input from the switches, toggles the output devices, and formats the live status for the backend.
+
+⚙️ Circuit Architecture
+
+Microcontroller: ESP32
+
+Inputs: 5x Slide Switches (configured with INPUT_PULLUP to Ground) representing manual room switches.
+
+Outputs: 3x LEDs (representing 15W Lights) and 2x Motors (representing 60W Fans).
+
+Power Note: In a real-world deployment, the ESP32 would trigger Relay Modules to control the high-voltage AC mains power in parallel to the lights and fans. For this simulation, the logic is demonstrated directly via the GPIO pins.
+
 ## Notes
 
 - Make sure the backend is running before starting the frontend dashboard.
