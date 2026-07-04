@@ -2,7 +2,7 @@ flask
 flask-socketio
 python-dotenv
 supabase
-Flask
 requests
-supabase
 python-dotenv
+groq
+discord.py
